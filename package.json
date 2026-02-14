@@ -1,6 +1,6 @@
 {
   "name": "scribbletune",
-  "version": "5.1.1",
+  "version": "5.1.2",
   "description": "Create music with JavaScript and Node.js!",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -35,7 +35,7 @@
     "bump-patch": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
-    "harmonics": "^1.0.8",
+    "harmonics": "^1.1.2",
     "jsmidgen": "~0.1.5"
   },
   "devDependencies": {
