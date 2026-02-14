@@ -4,6 +4,16 @@ import { midi } from '../src/midi';
 import { scale } from 'harmonics';
 
 describe('../src/midi', () => {
+  afterEach(() => {
+    // Clean up any generated midi files
+    const files = ['music.mid', 'music.mid.mid', 'test.mid', 'test.mid.mid', 'custom_name.mid'];
+    files.forEach(file => {
+      if (fs.existsSync(`./${file}`)) {
+        fs.unlinkSync(`./${file}`);
+      }
+    });
+  });
+
   it('writes a midi file', () => {
     const fileName = 'music.mid';
     const filePath = `./${fileName}`;
@@ -14,7 +24,6 @@ describe('../src/midi', () => {
 
     midi(scribbleClip, fileName);
     expect(fs.existsSync(filePath)).toBe(true);
-    fs.unlinkSync(filePath);
   });
 
   it.skip('returns a byte string if fileName is null', () => {
@@ -48,5 +57,49 @@ describe('../src/midi', () => {
     // Compare that the two generated midi files have different values
     expect(convertBytesToAsciiArray(bytesTempo1)[27]).toBe(39);
     expect(convertBytesToAsciiArray(bytesTempo2)[27]).toBe(16);
+  });
+
+  it('adds .mid extension if not provided', () => {
+    const fileName = 'test';
+    const filePath = './test.mid';
+    const scribbleClip = clip({
+      pattern: 'x',
+      notes: 'C4',
+    });
+
+    midi(scribbleClip, fileName);
+    expect(fs.existsSync(filePath)).toBe(true);
+    fs.unlinkSync(filePath);
+  });
+
+  it('returns bytes if fileName is null', () => {
+    const scribbleClip = clip({
+      pattern: 'x',
+      notes: 'C4',
+    });
+    const result = midi(scribbleClip, null);
+    expect(result).toBeDefined();
+    expect(typeof result).toBe('string');
+  });
+
+  it('handles clips with multiple notes (chords)', () => {
+    const scribbleClip = clip({
+      pattern: 'x',
+      notes: 'CM',
+    });
+
+    const result = midi(scribbleClip, null);
+    expect(result).toBeDefined();
+    expect(typeof result).toBe('string');
+  });
+
+  it('handles empty clip pattern', () => {
+    const scribbleClip = clip({
+      pattern: 'x[-]',
+      notes: 'C4',
+    });
+
+    const result = midi(scribbleClip, null);
+    expect(result).toBeDefined();
   });
 });
