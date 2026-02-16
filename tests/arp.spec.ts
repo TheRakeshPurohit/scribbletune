@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { arp } from '../src/arp';
 
 describe('../src/arp', () => {
@@ -71,7 +72,7 @@ describe('../src/arp', () => {
   it('throws error for invalid chords type', () => {
     expect(() => {
       arp({
-        chords: 123 as any,
+        chords: 123 as unknown as string,
         count: 4,
       });
     }).toThrow('Invalid value for chords');

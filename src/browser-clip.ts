@@ -1,57 +1,17 @@
-import { Channel } from './channel';
-import type { ClipParams } from './types';
-import { convertChordsToNotes, randomInt, shuffle, expandStr } from './utils';
-
-// import { window } from './window';
-
-// if (!(window as any).Tone) {
-//   (window as any).Tone = Tone;
-// }
-// const tone = (window as any).Tone;
-// const tone = Tone || (window as any).Tone;
+import type { Channel } from './channel';
+import { checkToneObjLoaded } from './channel/instrument-factory';
+import {
+  buildSequenceCallback,
+  type SequenceHost,
+} from './channel/sequence-builder';
+import { preprocessClipParams } from './clip-utils';
+import type { ClipParams, PatternElement, SeqFn } from './types';
+import { expandStr, randomInt } from './utils';
 
 const defaultSubdiv = '4n';
 const defaultDur = '8n';
 
-/**
- * Get default params for a clip, such as root note, pattern etc
- * @return {Object}
- */
-const getDefaultParams = (): ClipParams => ({
-  notes: ['C4'],
-  pattern: 'x',
-  shuffle: false,
-  sizzle: false,
-  sizzleReps: 1,
-  arpegiate: false,
-  subdiv: '4n',
-  align: '1m',
-  alignOffset: '0',
-  amp: 100,
-  accentLow: 70,
-  randomNotes: null,
-  offlineRendering: false,
-});
-
-/* UNUSED *
- * HDR speed is denoted by the number of ticks per note
- * By default this is set to a quarter note (4n) to be in line with Tone.js' default subdivision
- * Technically a bar is 512 ticks long. So it's HDR speed is 512
- * @type {Object}
- * /
-const hdr: NVP<number> = {
-  '1m': 2048,
-  '2m': 4096,
-  '3m': 6144,
-  '4m': 8192,
-  '1n': 512,
-  '2n': 256,
-  '4n': 128,
-  '8n': 64,
-  '16n': 32,
-};
-/* */
-
+/** Get the note(s) for the current step, cycling through the notes array. */
 export const getNote = (
   el: string,
   params: ClipParams,
@@ -66,17 +26,22 @@ export const getNote = (
   return '';
 };
 
+/** Get the duration for the current step, cycling through the durations array. */
 export const getDuration = (
   params: ClipParams,
   counter: number
-): string | number | undefined => {
+): string | number => {
   return params.durations
     ? params.durations[counter % params.durations.length]
     : params.dur || params.subdiv || defaultDur;
 };
 
+/**
+ * Walk a nested pattern array and compute a flat list of note durations (in seconds).
+ * Underscores (`_`) extend the previous note's duration.
+ */
 export const recursivelyApplyPatternToDurations = (
-  patternArr: string[],
+  patternArr: PatternElement[],
   length: number,
   durations: number[] = []
 ): number[] => {
@@ -96,11 +61,16 @@ export const recursivelyApplyPatternToDurations = (
   return durations;
 };
 
+/**
+ * Create a Tone.Sequence from clip parameters for live browser playback.
+ * When a Channel is provided, uses its instrument. When omitted, creates a
+ * standalone Tone.Player from `params.sample`.
+ */
 const generateSequence = (
   params: ClipParams,
-  channel: Channel,
-  context?: any
-): any => {
+  channel?: Channel,
+  context?: ToneAudioContext
+): ToneSequence => {
   context = context || Tone.getContext();
 
   if (!params.pattern) {
@@ -114,14 +84,44 @@ const generateSequence = (
     );
   }
 
+  let callback: SeqFn;
+
+  if (channel) {
+    // Channel-based path (existing behavior)
+    callback = channel.getSeqFn(params);
+  } else if (params.sample) {
+    // Standalone sample-based path
+    const player = new Tone.Player({ url: params.sample, context });
+    player.toDestination();
+    player.sync();
+
+    const host: SequenceHost = {
+      instrument: player,
+      hasLoaded: false,
+      clipNoteCount: 0,
+    };
+
+    checkToneObjLoaded(player as ToneLoadable, () => {
+      host.hasLoaded = true;
+    });
+
+    const noop = () => {};
+    callback = buildSequenceCallback(params, host, noop, noop);
+  } else {
+    throw new Error(
+      'Either a Channel or a sample URL must be provided to create a clip.'
+    );
+  }
+
   return new Tone.Sequence({
-    callback: channel.getSeqFn(params),
+    callback,
     events: expandStr(params.pattern),
     subdivision: params.subdiv || defaultSubdiv,
     context,
   });
 };
 
+/** Calculate total duration (in seconds) of a pattern at the given subdivision. */
 export const totalPatternDuration = (
   pattern: string,
   subdivOrLength: string | number
@@ -131,6 +131,7 @@ export const totalPatternDuration = (
     : Tone.Ticks(subdivOrLength).toSeconds() * expandStr(pattern).length;
 };
 
+/** Compute the least common multiple of two positive integers. */
 const leastCommonMultiple = (n1: number, n2: number): number => {
   const [smallest, largest] = n1 < n2 ? [n1, n2] : [n2, n1];
   let i = largest;
@@ -140,6 +141,10 @@ const leastCommonMultiple = (n1: number, n2: number): number => {
   return i;
 };
 
+/**
+ * Calculate the minimum duration (in seconds) needed to offline-render a clip
+ * so that all notes cycle through completely.
+ */
 export const renderingDuration = (
   pattern: string,
   subdivOrLength: string | number,
@@ -163,24 +168,25 @@ export const renderingDuration = (
 };
 
 let ongoingRenderingCounter = 0;
-let originalContext: any;
+let originalContext: ToneAudioContext | undefined;
 
+/** Render a clip offline into a Tone.Player buffer for later playback. */
 const offlineRenderClip = (params: ClipParams, duration: number) => {
   if (!originalContext) {
     originalContext = Tone.getContext();
   }
   ongoingRenderingCounter++;
   const player = new Tone.Player({ context: originalContext, loop: true });
-  Tone.Offline(async (context: any): Promise<void> => {
-    const sequence = generateSequence(params, context);
+  Tone.Offline(async (context: ToneAudioContext): Promise<void> => {
+    const sequence = generateSequence(params, context as unknown as Channel);
     await Tone.loaded();
     sequence.start();
     context.transport.start();
-  }, duration).then((buffer: any) => {
+  }, duration).then((buffer: ToneLoadable) => {
     player.buffer = buffer;
     ongoingRenderingCounter--;
     if (ongoingRenderingCounter === 0) {
-      Tone.setContext(originalContext);
+      Tone.setContext(originalContext!);
       params.offlineRenderingCallback?.();
     }
   });
@@ -195,37 +201,11 @@ const offlineRenderClip = (params: ClipParams, duration: number) => {
  * Take a object literal that may have a Tone.js player OR instrument
  * or simply a sample or synth with a pattern and return a Tone.js sequence
  */
-export const clip = (params: ClipParams, channel: Channel): any => {
-  params = { ...getDefaultParams(), ...(params || {}) };
-
-  // If notes is a string, split it into an array
-  if (typeof params.notes === 'string') {
-    // Remove any accidental double spaces
-    params.notes = params.notes.replace(/\s{2,}/g, ' ');
-    params.notes = params.notes.split(' ');
-  }
-
-  params.notes = params.notes ? params.notes.map(convertChordsToNotes) : [];
-
-  if (/[^x\-_[\]R]/.test(params.pattern)) {
-    throw new TypeError(
-      `pattern can only comprise x - _ [ ] R, found ${params.pattern}`
-    );
-  }
-
-  if (params.shuffle) {
-    params.notes = shuffle(params.notes);
-  }
-
-  if (params.randomNotes && typeof params.randomNotes === 'string') {
-    params.randomNotes = params.randomNotes.replace(/\s{2,}/g, ' ').split(/\s/);
-  }
-
-  if (params.randomNotes) {
-    params.randomNotes = (params.randomNotes as string[]).map(
-      convertChordsToNotes
-    );
-  }
+export const clip = (
+  params: ClipParams,
+  channel?: Channel
+): ToneSequence | ToneInstrument => {
+  params = preprocessClipParams(params, { align: '1m', alignOffset: '0' });
 
   if (params.offlineRendering) {
     return offlineRenderClip(
@@ -233,7 +213,7 @@ export const clip = (params: ClipParams, channel: Channel): any => {
       renderingDuration(
         params.pattern,
         params.subdiv || defaultSubdiv,
-        params.notes,
+        params.notes || [],
         params.randomNotes
       )
     );

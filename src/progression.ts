@@ -1,6 +1,6 @@
 import { scale } from 'harmonics';
-import type { NVP, TPD, ProgressionScale } from './types';
-import { pickOne, dice } from './utils';
+import type { NVP, ProgressionScale, TPD } from './types';
+import { dice, pickOne } from './utils';
 
 /**
  * Get the chords that go with a given scale/mode
@@ -51,10 +51,10 @@ const getChordName = (roman: string): string => {
     prefix = 'm';
   }
   if (roman.indexOf('°') > -1) {
-    return prefix + '7b5';
+    return `${prefix}7b5`;
   }
   if (roman.indexOf('+') > -1) {
-    return prefix + '#5';
+    return `${prefix}#5`;
   }
 
   if (roman.indexOf('7') > -1) {
@@ -97,12 +97,13 @@ export const getChordsByProgression = (
     // get the octave of the note;
     const oct = note.replace(/\D+/, ''); // e.g. 4
     // now get the chord
-    return note.replace(/\d/, '') + chordName + '_' + oct;
+    return `${note.replace(/\d/, '') + chordName}_${oct}`;
   });
 
   return chordFamily.toString().replace(/,/g, ' ');
 };
 
+/** Create a progression generator that follows tonic -> predominant -> dominant flow. */
 const getProgFactory = ({ T, P, D }: TPD) => {
   return (count = 4) => {
     const chords = [];
@@ -170,7 +171,10 @@ const m = getProgFactory({ T: ['i', 'VI'], P: ['ii', 'iv'], D: ['V'] });
  * @param scaleType e.g. M (for major chord progression), m (for minor chord progression)
  * @param count e.g. 4
  */
-export const progression = (scaleType: ProgressionScale, count = 4): any[] => {
+export const progression = (
+  scaleType: ProgressionScale,
+  count = 4
+): string[] => {
   if (scaleType === 'major' || scaleType === 'M') {
     return M(count);
   }

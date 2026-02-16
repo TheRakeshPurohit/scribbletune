@@ -1,9 +1,14 @@
 import { Channel } from './channel';
 import type { ChannelParams, ChannelPattern, PlayParams } from './types';
 
+/**
+ * A Session manages multiple Channels and coordinates clip playback
+ * across them, similar to a scene/row in a DAW.
+ */
 export class Session {
   sessionChannels: Channel[];
 
+  /** Create a session, optionally pre-populated with channels. */
   constructor(arr: ChannelParams[]) {
     arr = arr || [];
     this.sessionChannels = arr.map((ch: ChannelParams, i: number) => {
@@ -14,7 +19,7 @@ export class Session {
     });
   }
 
-  // Return unique idx for given channels
+  /** Return a unique channel index, generating a new one if `idx` is taken or missing. */
   uniqueIdx(channels: Channel[], idx?: string | number): string | number {
     if (!channels) {
       return idx || 0;
@@ -35,6 +40,7 @@ export class Session {
     return idx;
   }
 
+  /** Create a new channel with a unique index and add it to the session. */
   createChannel(ch: ChannelParams): Channel {
     // Make sure ch.idx is unique in this.sessionChannels
     ch.idx = this.uniqueIdx(this.sessionChannels, ch.idx);
@@ -43,52 +49,68 @@ export class Session {
     return newChannel;
   }
 
+  /** All channels in this session. */
   get channels(): Channel[] {
     return this.sessionChannels;
   }
 
+  /** Set the global transport tempo in BPM. */
   setTransportTempo(valueBpm: number): void {
     Channel.setTransportTempo(valueBpm);
   }
 
+  /** Resume the audio context and start the global transport. */
   startTransport(): void {
     Channel.startTransport();
   }
 
+  /**
+   * Stop the global transport.
+   * @param deleteEvents - If true (default), cancels all scheduled transport events.
+   */
   stopTransport(deleteEvents = true): void {
     Channel.stopTransport(deleteEvents);
   }
 
-  // Start the clips at a specific index in all the channels
+  /** Start the clip at the given index across all channels simultaneously. */
   startRow(idx: number): void {
-    this.sessionChannels.forEach((ch: any) => {
+    this.sessionChannels.forEach((ch: Channel) => {
       ch.startClip(idx);
     });
   }
 
+  /**
+   * Schedule clip playback across channels using a song-structure pattern.
+   * Each channel pattern is a string where each character is a clip index
+   * (or `-` for silence, `_` to sustain the previous clip).
+   */
   play(params: PlayParams): void {
     const channelPatterns = params.channelPatterns;
     const clipDuration = params.clipDuration || '4:0:0';
     const clipDurationInSeconds: number = Tone.Time(clipDuration).toSeconds();
 
-    const stopClips = (clips: any[], time: number) => {
-      clips.forEach(c => c.stop(time));
+    const stopClips = (clips: ToneSequence[], time: number) => {
+      clips.forEach(c => {
+        c.stop(time);
+      });
     };
 
     const startClips = (
       channelIdx: string | number,
       clipIdx: string,
       time: number
-    ): any[] => {
-      return clipIdx === '-'
-        ? []
-        : this.channels
-            .filter(c => c.idx === channelIdx)
-            .map(c => c.clips[clipIdx as keyof Channel['clips']]?.start(time));
+    ): ToneSequence[] => {
+      if (clipIdx === '-') return [];
+      const clips = this.channels
+        .filter(c => c.idx === channelIdx)
+        .map(c => c.clips[Number(clipIdx)])
+        .filter((c): c is ToneSequence => c != null);
+      for (const c of clips) c.start(time);
+      return clips;
     };
 
     channelPatterns.forEach(({ channelIdx, pattern }: ChannelPattern) => {
-      let clips: any[] = [];
+      let clips: ToneSequence[] = [];
       let time = 0;
       let prevClipIdx = '-';
       pattern.split('').forEach((clipIdx: string) => {

@@ -1,7 +1,5 @@
-// global LiveAPI:true
-
-import fs from 'fs';
-import * as jsmidgen from 'jsmidgen';
+import fs from 'node:fs';
+import { File, Track } from '@scribbletune/midi';
 import type { NoteObject } from './types';
 
 /**
@@ -26,13 +24,13 @@ export const midi = (
   }
 
   if (!fileName.endsWith('.mid')) {
-    fileName = fileName + '.mid';
+    fileName = `${fileName}.mid`;
   }
 
   if (
     typeof window !== 'undefined' &&
     window.URL &&
-    window.URL.createObjectURL
+    typeof window.URL.createObjectURL === 'function'
   ) {
     return createDownloadLink(bytes, fileName);
   }
@@ -73,9 +71,10 @@ const createDownloadLink = (b: string, fileName: string): HTMLAnchorElement => {
   return link;
 };
 
+/** Build a MIDI File with a single track from the given note objects. */
 const createFileFromNotes = (notes: NoteObject[], bpm?: number) => {
-  const file = new jsmidgen.File();
-  const track = new jsmidgen.Track();
+  const file = new File();
+  const track = new Track();
 
   // set the track's bpm if it is provided
   if (typeof bpm === 'number') {

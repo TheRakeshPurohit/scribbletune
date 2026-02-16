@@ -1,15 +1,14 @@
+import { describe, expect, it } from 'vitest';
 import {
-  expandStr,
-  sizzleMap,
-  isNote,
-  shuffle,
-  pickOne,
-  dice,
-  flat,
-  errorHasMessage,
-  convertChordToNotes,
   convertChordsToNotes,
+  convertChordToNotes,
+  dice,
+  errorHasMessage,
+  expandStr,
+  isNote,
+  pickOne,
   randomInt,
+  shuffle,
 } from '../src/utils';
 
 describe('../src/utils', () => {
@@ -18,17 +17,6 @@ describe('../src/utils', () => {
     expect(expandStr('xx')[1]).toBe('x');
     expect(expandStr('x[-x]')[1][0]).toBe('-');
     expect(expandStr('x[-x[-x]]')[1][2][1]).toBe('x');
-  });
-
-  it('sizzles', () => {
-    expect(sizzleMap()[0]).toBe(63);
-    expect(sizzleMap()[1]).toBe(90);
-  });
-
-  it('sizzles with custom maxLevel', () => {
-    const sizzle64 = sizzleMap(64);
-    expect(sizzle64[0]).toBe(32);
-    expect(sizzle64.length).toBe(16);
   });
 
   it('is able to recognize a valid note', () => {
@@ -77,15 +65,6 @@ describe('../src/utils', () => {
   it('dice returns a boolean', () => {
     const result = dice();
     expect(typeof result).toBe('boolean');
-  });
-
-  it('flat flattens nested arrays', () => {
-    expect(flat([['a', 'b'], ['c', 'd']])).toEqual(['a', 'b', 'c', 'd']);
-    expect(flat([['1'], ['2', '3']])).toEqual(['1', '2', '3']);
-  });
-
-  it('flat handles empty arrays', () => {
-    expect(flat([])).toEqual([]);
   });
 
   it('errorHasMessage identifies error-like objects', () => {
