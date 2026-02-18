@@ -11,6 +11,15 @@ export default defineConfig([
     external: ['fs'],
   },
   {
+    entry: { cli: 'src/cli.ts' },
+    format: ['cjs'],
+    target: 'es2020',
+    dts: false,
+    sourcemap: false,
+    external: ['fs'],
+    banner: { js: '#!/usr/bin/env node' },
+  },
+  {
     entry: { browser: 'src/browser-index.ts' },
     format: ['cjs', 'esm'],
     target: 'es2020',

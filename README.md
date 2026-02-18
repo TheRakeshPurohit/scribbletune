@@ -23,6 +23,81 @@ npm install scribbletune
 
 ## Quick start
 
+### CLI
+
+The package now ships a CLI binary: `scribbletune`.
+
+Run modes:
+
+```bash
+# Global install
+npm install -g scribbletune
+scribbletune --help
+
+# Local/project install
+npm install scribbletune
+npx scribbletune --help
+```
+
+#### Command format
+
+```bash
+scribbletune --riff <root> <mode> <pattern> [octaveShift] [motif] [options]
+scribbletune --chord <root> <mode> <progression|random> <pattern> [subdiv] [options]
+scribbletune --arp <root> <mode> <progression|random> <pattern> [subdiv] [options]
+```
+
+Common options:
+
+```bash
+--outfile <file.mid>    # default: music.mid
+--bpm <number>
+--subdiv <4n|8n|1m...>
+--sizzle [sin|cos|rampUp|rampDown] [reps]
+--sizzle-reps <number>
+--amp <0-127>
+--accent <x--x...>
+--accent-low <0-127>
+```
+
+#### `--riff` examples
+
+```bash
+# Basic riff from scale
+scribbletune --riff C3 phrygian x-xRx_RR --outfile riff.mid
+
+# With octave shift and motif
+scribbletune --riff C3 phrygian x-xRx_RR 0 AABC --sizzle sin 2 --outfile riff-aabc.mid
+```
+
+#### `--chord` examples
+
+```bash
+# Degree digits (resolved against root/mode)
+scribbletune --chord C3 major 1645 xxxx 1m --sizzle cos 1 --outfile chords-1645.mid
+
+# Roman numerals (space/comma separated)
+scribbletune --chord C3 major "I IV vi V" xxxx 1m --outfile chords-roman.mid
+
+# Random progression
+scribbletune --chord C3 major random xxxx 1m --outfile chords-random.mid
+
+# Explicit chord names (root/mode currently ignored for this style)
+scribbletune --chord C3 major CM-FM-Am-GM xxxx 1m --outfile chords-explicit.mid
+```
+
+#### `--arp` examples
+
+```bash
+# Arp from degree progression
+scribbletune --arp C3 major 1736 xxxx 1m --sizzle cos 4 --outfile arp-1736.mid
+
+# Arp from explicit chords
+scribbletune --arp C3 major CM-FM-Am-GM xxxx 1m --count 4 --order 0123 --outfile arp-explicit.mid
+```
+
+Run `scribbletune --help` to see the latest CLI usage text.
+
 ### Generate a MIDI file (Node.js)
 
 ```js
