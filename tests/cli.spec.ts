@@ -30,7 +30,20 @@ describe('../src/cli', () => {
     const writeMidi = vi.fn();
 
     const code = runCli(
-      ['--riff', 'C3', 'phrygian', 'x-xRx_RR', '8n', '--style', 'AABC', '--sizzle', 'sin', '2', '--outfile', 'riff.mid'],
+      [
+        '--riff',
+        'C3',
+        'phrygian',
+        'x-xRx_RR',
+        '8n',
+        '--style',
+        'AABC',
+        '--sizzle',
+        'sin',
+        '2',
+        '--outfile',
+        'riff.mid',
+      ],
       { stdout: out, stderr: err, writeMidi }
     );
 
@@ -109,10 +122,11 @@ describe('../src/cli', () => {
     const out = vi.fn();
     const err = vi.fn();
 
-    const code = runCli(
-      ['--arp', 'C3', 'major', 'I,IV,v,vi', 'x', '8n'],
-      { stdout: out, stderr: err, writeMidi }
-    );
+    const code = runCli(['--arp', 'C3', 'major', 'I,IV,v,vi', 'x', '8n'], {
+      stdout: out,
+      stderr: err,
+      writeMidi,
+    });
 
     expect(code).toBe(0);
     expect(writeMidi).toHaveBeenCalledOnce();
@@ -177,10 +191,11 @@ describe('../src/cli', () => {
     const out = vi.fn();
     const err = vi.fn();
 
-    const code = runCli(
-      ['--arp', 'C3', 'major', '1', 'x.repeat(4)', '4n'],
-      { stdout: out, stderr: err, writeMidi }
-    );
+    const code = runCli(['--arp', 'C3', 'major', '1', 'x.repeat(4)', '4n'], {
+      stdout: out,
+      stderr: err,
+      writeMidi,
+    });
 
     expect(code).toBe(0);
     const notes = writeMidi.mock.calls[0][0] as NoteObject[];
@@ -192,11 +207,14 @@ describe('../src/cli', () => {
     const out = vi.fn();
     const err = vi.fn();
 
-    const code = runCli(['--riff', 'C3', 'major', 'x', '4n', '--style', 'AABC'], {
-      stdout: out,
-      stderr: err,
-      writeMidi,
-    });
+    const code = runCli(
+      ['--riff', 'C3', 'major', 'x', '4n', '--style', 'AABC'],
+      {
+        stdout: out,
+        stderr: err,
+        writeMidi,
+      }
+    );
 
     expect(code).toBe(0);
     const notes = writeMidi.mock.calls[0][0] as NoteObject[];
@@ -236,10 +254,22 @@ describe('../src/cli', () => {
 
     // Two A sections would diverge without caching due to different random values.
     const seq = [
-      0.9, 0.0, 0.9, 0.15, // A section (R picks low notes)
-      0.9, 0.95, 0.9, 0.8, // would be different for 2nd A if recomputed
-      0.9, 0.3, 0.9, 0.45, // B
-      0.9, 0.6, 0.9, 0.75, // C
+      0.9,
+      0.0,
+      0.9,
+      0.15, // A section (R picks low notes)
+      0.9,
+      0.95,
+      0.9,
+      0.8, // would be different for 2nd A if recomputed
+      0.9,
+      0.3,
+      0.9,
+      0.45, // B
+      0.9,
+      0.6,
+      0.9,
+      0.75, // C
     ];
     randomSpy.mockImplementation(() => seq.shift() ?? 0.9);
 

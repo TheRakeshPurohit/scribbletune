@@ -101,18 +101,18 @@ export const convertChordToNotes = (el: string): string[] => {
     e2 = e;
   }
 
-  if (!e1 && !e2) {
+  if (!e1 && !e2 && c1 && c2) {
     // Both inlineChord() and chord() have result
-    if (c1!.toString() !== c2!.toString()) {
+    if (c1.toString() !== c2.toString()) {
       throw new Error(`Chord ${el} cannot decode, guessing ${c1} or ${c2}`);
     }
-    return c1!;
+    return c1;
   } // else
-  if (!e1) {
-    return c1!;
+  if (!e1 && c1) {
+    return c1;
   } // else
-  if (!e2) {
-    return c2!;
+  if (!e2 && c2) {
+    return c2;
   } // else
 
   // Give up, last try:

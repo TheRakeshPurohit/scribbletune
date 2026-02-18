@@ -32,7 +32,7 @@ const getNextPos = (
   const alignOffsetTicks: number = Tone.Ticks(alignOffset).toTicks();
   const nextPosTicks = Tone.Ticks(
     Math.floor(transportPosTicks / alignTicks + 1) * alignTicks +
-    alignOffsetTicks
+      alignOffsetTicks
   );
   return nextPosTicks;
 };

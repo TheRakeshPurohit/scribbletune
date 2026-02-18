@@ -76,7 +76,9 @@ const romanByDigit = (
   const romans = progDigits.split('').map(digit => {
     const idx = Number(digit) - 1;
     if (idx < 0 || idx >= chordDegrees.length) {
-      throw new TypeError(`Invalid progression digit "${digit}" in "${progDigits}"`);
+      throw new TypeError(
+        `Invalid progression digit "${digit}" in "${progDigits}"`
+      );
     }
     return chordDegrees[idx];
   });
@@ -328,16 +330,9 @@ const makeRiff = (parsed: ParsedOptions): NoteObject[] => {
   }
   const riffScale = scale(`${root} ${mode}`);
 
-  let riffNotes = riffScale;
-  let resolvedPattern = resolvePattern(
-    pattern,
-    riffNotes.length,
-    parsed.fitPattern
-  );
-
   // Style defines sections: each style letter gets one full pattern block.
   // Example: style AABC + pattern x-x[xx] => 4 blocks in A,A,B,C order.
-  if (style && style.length) {
+  if (style?.length) {
     const sectionPattern = expandPatternSyntax(pattern);
     const letters = style.toUpperCase().split('');
     const sectionCache: Record<string, NoteObject[]> = {};
@@ -372,6 +367,13 @@ const makeRiff = (parsed: ParsedOptions): NoteObject[] => {
     return combined;
   }
 
+  const riffNotes = riffScale;
+  const resolvedPattern = resolvePattern(
+    pattern,
+    riffNotes.length,
+    parsed.fitPattern
+  );
+
   return clip({
     notes: riffNotes,
     randomNotes: riffScale,
@@ -390,7 +392,11 @@ const makeChord = (parsed: ParsedOptions): NoteObject[] => {
   }
   const chords = parseProgression(root, mode, progressionInput);
   const chordCount = chords.trim().split(/\s+/).length;
-  const resolvedPattern = resolvePattern(pattern, chordCount, parsed.fitPattern);
+  const resolvedPattern = resolvePattern(
+    pattern,
+    chordCount,
+    parsed.fitPattern
+  );
   return clip({
     notes: chords,
     pattern: resolvedPattern,

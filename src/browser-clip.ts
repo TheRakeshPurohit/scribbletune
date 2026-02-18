@@ -186,7 +186,9 @@ const offlineRenderClip = (params: ClipParams, duration: number) => {
     player.buffer = buffer;
     ongoingRenderingCounter--;
     if (ongoingRenderingCounter === 0) {
-      Tone.setContext(originalContext!);
+      if (originalContext) {
+        Tone.setContext(originalContext);
+      }
       params.offlineRenderingCallback?.();
     }
   });
