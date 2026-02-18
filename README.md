@@ -39,6 +39,19 @@ npm install scribbletune
 npx scribbletune --help
 ```
 
+Quick command examples:
+
+```bash
+# Use built file directly from repo (before publish)
+node dist/cli.cjs --help
+
+# Use local package binary
+npx scribbletune --help
+
+# If installed globally
+scribbletune --help
+```
+
 #### Command format
 
 ```bash
@@ -46,6 +59,20 @@ scribbletune --riff <root> <mode> <pattern> [octaveShift] [motif] [options]
 scribbletune --chord <root> <mode> <progression|random> <pattern> [subdiv] [options]
 scribbletune --arp <root> <mode> <progression|random> <pattern> [subdiv] [options]
 ```
+
+Progression input rules for `--chord` and `--arp`:
+
+```bash
+1645            # degree digits
+"I IV vi V"     # roman numerals (space separated)
+I,IV,vi,V       # roman numerals (comma separated)
+random          # generated progression
+CM-FM-Am-GM     # explicit chord names
+```
+
+Notes:
+- Hyphenated romans like `I-IV-vi-V` are not supported currently.
+- For explicit chords (`CM-FM-Am-GM`), `root` and `mode` are currently ignored.
 
 Common options:
 
@@ -58,6 +85,23 @@ Common options:
 --amp <0-127>
 --accent <x--x...>
 --accent-low <0-127>
+--fit-pattern         # explicit enable (already enabled by default)
+--no-fit-pattern      # disable automatic pattern fitting
+```
+
+Note: if your pattern uses `[` and `]` (for subdivisions), quote it in shell:
+
+```bash
+scribbletune --arp C3 major 1 'x-x[xx]-x-[xx]' 16n
+```
+
+Pattern helpers:
+
+```bash
+x.repeat(4)       # -> xxxx
+'x-x[xx]'.repeat(2)
+2(x-x[xx])        # prefix repeat shorthand
+(x-x[xx])2        # suffix repeat shorthand
 ```
 
 #### `--riff` examples
@@ -68,6 +112,9 @@ scribbletune --riff C3 phrygian x-xRx_RR --outfile riff.mid
 
 # With octave shift and motif
 scribbletune --riff C3 phrygian x-xRx_RR 0 AABC --sizzle sin 2 --outfile riff-aabc.mid
+
+# Pattern with subdivisions (quote [] in shell)
+scribbletune --riff C3 phrygian 'x-x[xx]-x-[xx]' 0 AABC --outfile riff-subdiv.mid
 ```
 
 #### `--chord` examples
@@ -84,6 +131,9 @@ scribbletune --chord C3 major random xxxx 1m --outfile chords-random.mid
 
 # Explicit chord names (root/mode currently ignored for this style)
 scribbletune --chord C3 major CM-FM-Am-GM xxxx 1m --outfile chords-explicit.mid
+
+# Subdivisions in pattern
+scribbletune --chord C3 major I,IV,vi,V 'x-x[xx]-x-[xx]' 8n --outfile chords-subdiv.mid
 ```
 
 #### `--arp` examples
@@ -92,9 +142,28 @@ scribbletune --chord C3 major CM-FM-Am-GM xxxx 1m --outfile chords-explicit.mid
 # Arp from degree progression
 scribbletune --arp C3 major 1736 xxxx 1m --sizzle cos 4 --outfile arp-1736.mid
 
+# Single degree "1" means tonic chord in the chosen key/mode
+scribbletune --arp C3 major 1 xxxx 4n --outfile arp-degree-1.mid
+
 # Arp from explicit chords
-scribbletune --arp C3 major CM-FM-Am-GM xxxx 1m --count 4 --order 0123 --outfile arp-explicit.mid
+scribbletune --arp C3 major CM-FM-Am-GM xxxx 1m --count 4 --order 1234 --outfile arp-explicit.mid
+
+# Custom note order inside each arpeggiated chord (one-based)
+scribbletune --arp C3 major 1 xxxx 4n --order 2143 --outfile arp-order-2143.mid
+
+# Same custom order using local dist build
+node dist/cli.cjs --arp C3 major 1 xxxx 4n --order 2143 --outfile arp-order-local.mid
+
+# Auto-fit is default (single x expands to full generated arp length)
+scribbletune --arp C3 major 1736 x 4n --outfile arp-fit-default.mid
+
+# Disable auto-fit if you want a short clip
+scribbletune --arp C3 major 1736 x 4n --no-fit-pattern --outfile arp-no-fit.mid
 ```
+
+`--order` behavior:
+- One-based order is supported (`1234`, `2143`) and is recommended.
+- Zero-based order is also accepted for backward compatibility (`0123`, `1032`).
 
 Run `scribbletune --help` to see the latest CLI usage text.
 

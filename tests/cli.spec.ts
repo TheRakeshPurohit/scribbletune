@@ -89,6 +89,22 @@ describe('../src/cli', () => {
     expect(notes.length).toBeGreaterThan(0);
   });
 
+  it('applies positional subdiv for arp command', () => {
+    const writeMidi = vi.fn();
+    const out = vi.fn();
+    const err = vi.fn();
+
+    const code = runCli(
+      ['--arp', 'C3', 'major', 'I,IV,v,vi', 'x', '8n'],
+      { stdout: out, stderr: err, writeMidi }
+    );
+
+    expect(code).toBe(0);
+    expect(writeMidi).toHaveBeenCalledOnce();
+    const notes = writeMidi.mock.calls[0][0] as NoteObject[];
+    expect(notes[0].length).toBe(64);
+  });
+
   it('returns non-zero with unknown option', () => {
     const writeMidi = vi.fn();
     const out = vi.fn();
@@ -103,5 +119,87 @@ describe('../src/cli', () => {
     expect(code).toBe(1);
     expect(writeMidi).not.toHaveBeenCalled();
     expect(err).toHaveBeenCalled();
+  });
+
+  it('supports one-based arp order from cli', () => {
+    const writeMidi = vi.fn();
+    const out = vi.fn();
+    const err = vi.fn();
+
+    const code = runCli(
+      ['--arp', 'C3', 'major', '1', 'xxxx', '4n', '--order', '2143'],
+      { stdout: out, stderr: err, writeMidi }
+    );
+
+    expect(code).toBe(0);
+    const notes = writeMidi.mock.calls[0][0] as NoteObject[];
+    expect(notes[0].note?.[0]).toBe('E3');
+    expect(notes[1].note?.[0]).toBe('C3');
+    expect(notes[2].note?.[0]).toBe('C4');
+    expect(notes[3].note?.[0]).toBe('G3');
+  });
+
+  it('keeps zero-based arp order backward compatible', () => {
+    const writeMidi = vi.fn();
+    const out = vi.fn();
+    const err = vi.fn();
+
+    const code = runCli(
+      ['--arp', 'C3', 'major', '1', 'xxxx', '4n', '--order', '1032'],
+      { stdout: out, stderr: err, writeMidi }
+    );
+
+    expect(code).toBe(0);
+    const notes = writeMidi.mock.calls[0][0] as NoteObject[];
+    expect(notes[0].note?.[0]).toBe('E3');
+    expect(notes[1].note?.[0]).toBe('C3');
+    expect(notes[2].note?.[0]).toBe('C4');
+    expect(notes[3].note?.[0]).toBe('G3');
+  });
+
+  it('supports repeat syntax for pattern strings', () => {
+    const writeMidi = vi.fn();
+    const out = vi.fn();
+    const err = vi.fn();
+
+    const code = runCli(
+      ['--arp', 'C3', 'major', '1', 'x.repeat(4)', '4n'],
+      { stdout: out, stderr: err, writeMidi }
+    );
+
+    expect(code).toBe(0);
+    const notes = writeMidi.mock.calls[0][0] as NoteObject[];
+    expect(notes.length).toBe(4);
+  });
+
+  it('fits pattern to generated note count by default', () => {
+    const writeMidi = vi.fn();
+    const out = vi.fn();
+    const err = vi.fn();
+
+    const code = runCli(['--arp', 'C3', 'major', '1736', 'x', '4n'], {
+      stdout: out,
+      stderr: err,
+      writeMidi,
+    });
+
+    expect(code).toBe(0);
+    const notes = writeMidi.mock.calls[0][0] as NoteObject[];
+    expect(notes.length).toBe(16);
+  });
+
+  it('can disable auto fit with --no-fit-pattern', () => {
+    const writeMidi = vi.fn();
+    const out = vi.fn();
+    const err = vi.fn();
+
+    const code = runCli(
+      ['--arp', 'C3', 'major', '1736', 'x', '4n', '--no-fit-pattern'],
+      { stdout: out, stderr: err, writeMidi }
+    );
+
+    expect(code).toBe(0);
+    const notes = writeMidi.mock.calls[0][0] as NoteObject[];
+    expect(notes.length).toBe(1);
   });
 });
