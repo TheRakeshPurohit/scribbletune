@@ -30,16 +30,17 @@ type ParsedOptions = {
   subdiv?: string;
   count?: number;
   order?: string;
+  style?: string;
   fitPattern?: boolean;
 };
 
 const HELP_TEXT = `Usage:
-  scribbletune --riff <root> <mode> <pattern> [octaveShift] [motif]
+  scribbletune --riff <root> <mode> <pattern> [subdiv]
   scribbletune --chord <root> <mode> <progression|random> <pattern> [subdiv]
   scribbletune --arp <root> <mode> <progression|random> <pattern> [subdiv]
 
 Examples:
-  scribbletune --riff C3 phrygian x-xRx_RR 0 AABC --sizzle sin 2 --outfile riff.mid
+  scribbletune --riff C3 phrygian x-xRx_RR 8n --style AABC --sizzle sin 2 --outfile riff.mid
   scribbletune --chord C3 major 1645 xxxx 1m --sizzle cos 1 --outfile chord.mid
   scribbletune --chord C3 major CM-FM-Am-GM xxxx 1m
   scribbletune --chord C3 major random xxxx 1m
@@ -56,6 +57,7 @@ Options:
   --accent-low <0-127>  Accent low level
   --count <2-8>         Arp note count (arp command only)
   --order <digits>      Arp order string (arp command only)
+  --style <letters>     Riff motif/style pattern (e.g. AABC)
   --fit-pattern         Repeat pattern until it can consume all generated notes (default)
   --no-fit-pattern      Disable automatic pattern fitting
   -h, --help            Show this help
@@ -80,12 +82,6 @@ const romanByDigit = (
   });
 
   return { chordDegrees: romans.join(' '), raw: progDigits };
-};
-
-const setOctave = (note: string, octaveShift = 0): string => {
-  const base = note.replace(/\d+/g, '');
-  const oct = Number((note.match(/\d+/)?.[0] || '4') as string);
-  return `${base}${oct + octaveShift}`;
 };
 
 const parseProgression = (
@@ -290,6 +286,12 @@ const parseCliArgs = (argv: string[]): ParsedOptions | null => {
       continue;
     }
 
+    if (token === '--style') {
+      options.style = argv[i + 1];
+      i += 2;
+      continue;
+    }
+
     if (token === '--fit-pattern') {
       options.fitPattern = true;
       i += 1;
@@ -319,38 +321,63 @@ const baseClipParams = (parsed: ParsedOptions): Partial<ClipParams> => {
 };
 
 const makeRiff = (parsed: ParsedOptions): NoteObject[] => {
-  const [root, mode, pattern, octaveShiftArg, motif] = parsed.positionals;
+  const [root, mode, pattern, subdiv] = parsed.positionals;
+  const style = parsed.style;
   if (!root || !mode || !pattern) {
-    throw new TypeError(
-      'riff requires: <root> <mode> <pattern> [octaveShift] [motif]'
-    );
+    throw new TypeError('riff requires: <root> <mode> <pattern> [subdiv]');
   }
-  const octaveShift = Number(octaveShiftArg || '0');
-  const riffScale = scale(`${setOctave(root, octaveShift)} ${mode}`);
-  const riffNotes =
-    motif && motif.length
-      ? motif
-          .toUpperCase()
-          .split('')
-          .map(letter => {
-            const idx = letter.charCodeAt(0) - 65;
-            if (idx < 0) {
-              return riffScale[0];
-            }
-            return riffScale[idx % riffScale.length];
-          })
-      : riffScale;
-  const resolvedPattern = resolvePattern(
+  const riffScale = scale(`${root} ${mode}`);
+
+  let riffNotes = riffScale;
+  let resolvedPattern = resolvePattern(
     pattern,
     riffNotes.length,
     parsed.fitPattern
   );
+
+  // Style defines sections: each style letter gets one full pattern block.
+  // Example: style AABC + pattern x-x[xx] => 4 blocks in A,A,B,C order.
+  if (style && style.length) {
+    const sectionPattern = expandPatternSyntax(pattern);
+    const letters = style.toUpperCase().split('');
+    const sectionCache: Record<string, NoteObject[]> = {};
+    const combined: NoteObject[] = [];
+    const clipParams = {
+      ...baseClipParams(parsed),
+      subdiv: parsed.subdiv || subdiv,
+    };
+
+    for (const letter of letters) {
+      if (!sectionCache[letter]) {
+        // Build each style section once, then reuse it exactly for repeated letters.
+        const idx = letter.charCodeAt(0) - 65;
+        const note = riffScale[idx >= 0 ? idx % riffScale.length : 0];
+        sectionCache[letter] = clip({
+          notes: [note],
+          randomNotes: riffScale,
+          pattern: sectionPattern,
+          ...clipParams,
+        });
+      }
+
+      // Clone section events so each block can be mutated independently downstream if needed.
+      combined.push(
+        ...sectionCache[letter].map(event => ({
+          ...event,
+          note: event.note ? [...event.note] : null,
+        }))
+      );
+    }
+
+    return combined;
+  }
 
   return clip({
     notes: riffNotes,
     randomNotes: riffScale,
     pattern: resolvedPattern,
     ...baseClipParams(parsed),
+    subdiv: parsed.subdiv || subdiv,
   });
 };
 

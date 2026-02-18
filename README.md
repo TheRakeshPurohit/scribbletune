@@ -5,7 +5,7 @@
 <h1 align="center">Scribbletune</h1>
 
 <p align="center">
-  Create music with JavaScript. Use simple strings and arrays to craft rhythms, melodies, and chord progressions — then export MIDI files or play them live in the browser with <a href="https://tonejs.github.io/">Tone.js</a>.
+  Create music with JavaScript. Use simple strings and arrays to craft rhythms, melodies, and chord progressions — then export MIDI files or play them live in the browser with <a href="https://tonejs.github.io/">Tone.js</a> or use the CLI to directly emit MIDI file from your terminal.
 </p>
 
 <p align="center">
@@ -23,9 +23,9 @@ npm install scribbletune
 
 ## Quick start
 
-### CLI
+### Option 1: CLI
 
-The package now ships a CLI binary: `scribbletune`.
+If you installed Scribbletune globally via `npm i -g scribbletune` then you can directly use `scribbletune` as the command. If you installed it locally via `npm i scribbletune` then please use `npx scribbletune` as the command.
 
 Run modes:
 
@@ -41,21 +41,10 @@ npx scribbletune --help
 
 Quick command examples:
 
-```bash
-# Use built file directly from repo (before publish)
-node dist/cli.cjs --help
-
-# Use local package binary
-npx scribbletune --help
-
-# If installed globally
-scribbletune --help
-```
-
 #### Command format
 
 ```bash
-scribbletune --riff <root> <mode> <pattern> [octaveShift] [motif] [options]
+scribbletune --riff <root> <mode> <pattern> [subdiv] [options]
 scribbletune --chord <root> <mode> <progression|random> <pattern> [subdiv] [options]
 scribbletune --arp <root> <mode> <progression|random> <pattern> [subdiv] [options]
 ```
@@ -67,26 +56,23 @@ Progression input rules for `--chord` and `--arp`:
 "I IV vi V"     # roman numerals (space separated)
 I,IV,vi,V       # roman numerals (comma separated)
 random          # generated progression
-CM-FM-Am-GM     # explicit chord names
+CM-FM-Am-GM     # explicit chord names (`root` and `mode` are ignored)
 ```
-
-Notes:
-- Hyphenated romans like `I-IV-vi-V` are not supported currently.
-- For explicit chords (`CM-FM-Am-GM`), `root` and `mode` are currently ignored.
 
 Common options:
 
 ```bash
---outfile <file.mid>    # default: music.mid
---bpm <number>
+--outfile <file.mid>  # default: music.mid
 --subdiv <4n|8n|1m...>
 --sizzle [sin|cos|rampUp|rampDown] [reps]
 --sizzle-reps <number>
 --amp <0-127>
 --accent <x--x...>
 --accent-low <0-127>
+--style <letters>     # riff motif/style, e.g. AABC
 --fit-pattern         # explicit enable (already enabled by default)
 --no-fit-pattern      # disable automatic pattern fitting
+--bpm <number>        # your DAW may or may not support it
 ```
 
 Note: if your pattern uses `[` and `]` (for subdivisions), quote it in shell:
@@ -110,12 +96,20 @@ x.repeat(4)       # -> xxxx
 # Basic riff from scale
 scribbletune --riff C3 phrygian x-xRx_RR --outfile riff.mid
 
-# With octave shift and motif
-scribbletune --riff C3 phrygian x-xRx_RR 0 AABC --sizzle sin 2 --outfile riff-aabc.mid
+# With motif/style and positional subdiv
+scribbletune --riff C3 phrygian x-xRx_RR 8n --style AABC --sizzle sin 2 --outfile riff-aabc.mid
+
+# Set riff subdivision via positional arg
+scribbletune --riff C3 phrygian x-xRx_RR 8n --style AABC --outfile riff-8n.mid
 
 # Pattern with subdivisions (quote [] in shell)
-scribbletune --riff C3 phrygian 'x-x[xx]-x-[xx]' 0 AABC --outfile riff-subdiv.mid
+scribbletune --riff C3 phrygian 'x-x[xx]-x-[xx]' 8n --style AABC --outfile riff-subdiv.mid
 ```
+
+Riff + motif note:
+- `--style` creates riff sections by repeating the full pattern per letter.
+- Example: `--style AABC` with pattern `x-x[xx]` creates 4 sections: `A`, `A`, `B`, `C`.
+- Repeated letters reuse the exact same generated section (same rhythm and same notes, including random `R` choices).
 
 #### `--chord` examples
 
@@ -167,7 +161,7 @@ scribbletune --arp C3 major 1736 x 4n --no-fit-pattern --outfile arp-no-fit.mid
 
 Run `scribbletune --help` to see the latest CLI usage text.
 
-### Generate a MIDI file (Node.js)
+### Option 2: Node.js
 
 ```js
 import { scale, clip, midi } from 'scribbletune';
@@ -180,7 +174,7 @@ midi(c, 'c-major.mid');
 
 Run it with `node` and open the `.mid` file in Ableton Live, GarageBand, Logic, or any DAW.
 
-### Play in the browser (with Tone.js)
+### Option 3: Browser (with Tone.js)
 
 Scribbletune's browser entry point adds `Session`, `Channel`, and live `clip()` support on top of [Tone.js](https://tonejs.github.io/).
 
@@ -353,6 +347,12 @@ npm test          # run tests
 npm run build     # build with tsup
 npm run lint      # check with biome
 npm run dev       # build in watch mode
+```
+
+If developing new features for the CLI, use the following command after running `npm run build` to test before publishing,
+
+```bash
+node dist/cli.cjs --help
 ```
 
 ## License
