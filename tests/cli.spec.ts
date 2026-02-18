@@ -75,7 +75,7 @@ describe('../src/cli', () => {
     const err = vi.fn();
 
     const code = runCli(
-      ['--chord', 'C3', 'major', '1645', 'xxxx', '1m', '--sizzle', 'cos', '1'],
+      ['--chord', 'C3', 'major', 'xxxx', '1m', '1645', '--sizzle', 'cos', '1'],
       { stdout: out, stderr: err, writeMidi }
     );
 
@@ -91,7 +91,7 @@ describe('../src/cli', () => {
     const err = vi.fn();
 
     const code = runCli(
-      ['--chord', 'C3', 'major', 'CM-FM-Am-GM', 'xxxx', '1m'],
+      ['--chord', 'C3', 'major', 'xxxx', '1m', 'CM-FM-Am-GM'],
       { stdout: out, stderr: err, writeMidi }
     );
 
@@ -107,7 +107,7 @@ describe('../src/cli', () => {
     const err = vi.fn();
 
     const code = runCli(
-      ['--arp', 'C3', 'major', '1736', 'xxxx', '1m', '--sizzle', 'cos', '4'],
+      ['--arp', 'C3', 'major', 'xxxx', '1m', '1736', '--sizzle', 'cos', '4'],
       { stdout: out, stderr: err, writeMidi }
     );
 
@@ -122,7 +122,7 @@ describe('../src/cli', () => {
     const out = vi.fn();
     const err = vi.fn();
 
-    const code = runCli(['--arp', 'C3', 'major', 'I,IV,v,vi', 'x', '8n'], {
+    const code = runCli(['--arp', 'C3', 'major', 'x', '8n', 'I,IV,v,vi'], {
       stdout: out,
       stderr: err,
       writeMidi,
@@ -156,7 +156,7 @@ describe('../src/cli', () => {
     const err = vi.fn();
 
     const code = runCli(
-      ['--arp', 'C3', 'major', '1', 'xxxx', '4n', '--order', '2143'],
+      ['--arp', 'C3', 'major', 'xxxx', '4n', '1', '--order', '2143'],
       { stdout: out, stderr: err, writeMidi }
     );
 
@@ -174,7 +174,7 @@ describe('../src/cli', () => {
     const err = vi.fn();
 
     const code = runCli(
-      ['--arp', 'C3', 'major', '1', 'xxxx', '4n', '--order', '1032'],
+      ['--arp', 'C3', 'major', 'xxxx', '4n', '1', '--order', '1032'],
       { stdout: out, stderr: err, writeMidi }
     );
 
@@ -191,7 +191,7 @@ describe('../src/cli', () => {
     const out = vi.fn();
     const err = vi.fn();
 
-    const code = runCli(['--arp', 'C3', 'major', '1', 'x.repeat(4)', '4n'], {
+    const code = runCli(['--arp', 'C3', 'major', 'x.repeat(4)', '4n', '1'], {
       stdout: out,
       stderr: err,
       writeMidi,
@@ -293,7 +293,7 @@ describe('../src/cli', () => {
     const out = vi.fn();
     const err = vi.fn();
 
-    const code = runCli(['--arp', 'C3', 'major', '1736', 'x', '4n'], {
+    const code = runCli(['--arp', 'C3', 'major', 'x', '4n', '1736'], {
       stdout: out,
       stderr: err,
       writeMidi,
@@ -310,7 +310,7 @@ describe('../src/cli', () => {
     const err = vi.fn();
 
     const code = runCli(
-      ['--arp', 'C3', 'major', '1736', 'x', '4n', '--no-fit-pattern'],
+      ['--arp', 'C3', 'major', 'x', '4n', '1736', '--no-fit-pattern'],
       { stdout: out, stderr: err, writeMidi }
     );
 

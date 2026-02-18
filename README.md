@@ -44,9 +44,9 @@ Quick command examples:
 #### Command format
 
 ```bash
-scribbletune --riff <root> <mode> <pattern> [subdiv] [options]
-scribbletune --chord <root> <mode> <progression|random> <pattern> [subdiv] [options]
-scribbletune --arp <root> <mode> <progression|random> <pattern> [subdiv] [options]
+scribbletune --riff <root> <mode> <pattern> <subdiv> [options]
+scribbletune --chord <root> <mode> <pattern> <subdiv> <progression|random> [options]
+scribbletune --arp <root> <mode> <pattern> <subdiv> <progression|random> [options]
 ```
 
 Progression input rules for `--chord` and `--arp`:
@@ -115,44 +115,44 @@ Riff + motif note:
 
 ```bash
 # Degree digits (resolved against root/mode)
-scribbletune --chord C3 major 1645 xxxx 1m --sizzle cos 1 --outfile chords-1645.mid
+scribbletune --chord C3 major xxxx 1m 1645 --sizzle cos 1 --outfile chords-1645.mid
 
 # Roman numerals (space/comma separated)
-scribbletune --chord C3 major "I IV vi V" xxxx 1m --outfile chords-roman.mid
+scribbletune --chord C3 major xxxx 1m "I IV vi V" --outfile chords-roman.mid
 
 # Random progression
-scribbletune --chord C3 major random xxxx 1m --outfile chords-random.mid
+scribbletune --chord C3 major xxxx 1m random --outfile chords-random.mid
 
 # Explicit chord names (root/mode currently ignored for this style)
-scribbletune --chord C3 major CM-FM-Am-GM xxxx 1m --outfile chords-explicit.mid
+scribbletune --chord C3 major xxxx 1m CM-FM-Am-GM --outfile chords-explicit.mid
 
 # Subdivisions in pattern
-scribbletune --chord C3 major I,IV,vi,V 'x-x[xx]-x-[xx]' 8n --outfile chords-subdiv.mid
+scribbletune --chord C3 major 'x-x[xx]-x-[xx]' 8n I,IV,vi,V --outfile chords-subdiv.mid
 ```
 
 #### `--arp` examples
 
 ```bash
 # Arp from degree progression
-scribbletune --arp C3 major 1736 xxxx 1m --sizzle cos 4 --outfile arp-1736.mid
+scribbletune --arp C3 major xxxx 1m 1736 --sizzle cos 4 --outfile arp-1736.mid
 
 # Single degree "1" means tonic chord in the chosen key/mode
-scribbletune --arp C3 major 1 xxxx 4n --outfile arp-degree-1.mid
+scribbletune --arp C3 major xxxx 4n 1 --outfile arp-degree-1.mid
 
 # Arp from explicit chords
-scribbletune --arp C3 major CM-FM-Am-GM xxxx 1m --count 4 --order 1234 --outfile arp-explicit.mid
+scribbletune --arp C3 major xxxx 1m CM-FM-Am-GM --count 4 --order 1234 --outfile arp-explicit.mid
 
 # Custom note order inside each arpeggiated chord (one-based)
-scribbletune --arp C3 major 1 xxxx 4n --order 2143 --outfile arp-order-2143.mid
+scribbletune --arp C3 major xxxx 4n 1 --order 2143 --outfile arp-order-2143.mid
 
 # Same custom order using local dist build
-node dist/cli.cjs --arp C3 major 1 xxxx 4n --order 2143 --outfile arp-order-local.mid
+node dist/cli.cjs --arp C3 major xxxx 4n 1 --order 2143 --outfile arp-order-local.mid
 
 # Auto-fit is default (single x expands to full generated arp length)
-scribbletune --arp C3 major 1736 x 4n --outfile arp-fit-default.mid
+scribbletune --arp C3 major x 4n 1736 --outfile arp-fit-default.mid
 
 # Disable auto-fit if you want a short clip
-scribbletune --arp C3 major 1736 x 4n --no-fit-pattern --outfile arp-no-fit.mid
+scribbletune --arp C3 major x 4n 1736 --no-fit-pattern --outfile arp-no-fit.mid
 ```
 
 `--order` behavior:

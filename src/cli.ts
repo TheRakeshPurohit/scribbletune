@@ -35,16 +35,16 @@ type ParsedOptions = {
 };
 
 const HELP_TEXT = `Usage:
-  scribbletune --riff <root> <mode> <pattern> [subdiv]
-  scribbletune --chord <root> <mode> <progression|random> <pattern> [subdiv]
-  scribbletune --arp <root> <mode> <progression|random> <pattern> [subdiv]
+  scribbletune --riff <root> <mode> <pattern> <subdiv>
+  scribbletune --chord <root> <mode> <pattern> <subdiv> <progression|random>
+  scribbletune --arp <root> <mode> <pattern> <subdiv> <progression|random>
 
 Examples:
   scribbletune --riff C3 phrygian x-xRx_RR 8n --style AABC --sizzle sin 2 --outfile riff.mid
-  scribbletune --chord C3 major 1645 xxxx 1m --sizzle cos 1 --outfile chord.mid
-  scribbletune --chord C3 major CM-FM-Am-GM xxxx 1m
-  scribbletune --chord C3 major random xxxx 1m
-  scribbletune --arp C3 major 1736 xxxx 1m --sizzle cos 4
+  scribbletune --chord C3 major xxxx 1m 1645 --sizzle cos 1 --outfile chord.mid
+  scribbletune --chord C3 major xxxx 1m CM-FM-Am-GM
+  scribbletune --chord C3 major xxxx 1m random
+  scribbletune --arp C3 major xxxx 1m 1736 --sizzle cos 4
 
 Options:
   --outfile <name>      Output MIDI filename (default: music.mid)
@@ -325,8 +325,8 @@ const baseClipParams = (parsed: ParsedOptions): Partial<ClipParams> => {
 const makeRiff = (parsed: ParsedOptions): NoteObject[] => {
   const [root, mode, pattern, subdiv] = parsed.positionals;
   const style = parsed.style;
-  if (!root || !mode || !pattern) {
-    throw new TypeError('riff requires: <root> <mode> <pattern> [subdiv]');
+  if (!root || !mode || !pattern || !subdiv) {
+    throw new TypeError('riff requires: <root> <mode> <pattern> <subdiv>');
   }
   const riffScale = scale(`${root} ${mode}`);
 
@@ -384,10 +384,10 @@ const makeRiff = (parsed: ParsedOptions): NoteObject[] => {
 };
 
 const makeChord = (parsed: ParsedOptions): NoteObject[] => {
-  const [root, mode, progressionInput, pattern, subdiv] = parsed.positionals;
-  if (!root || !mode || !progressionInput || !pattern) {
+  const [root, mode, pattern, subdiv, progressionInput] = parsed.positionals;
+  if (!root || !mode || !progressionInput || !pattern || !subdiv) {
     throw new TypeError(
-      'chord requires: <root> <mode> <progression|random> <pattern> [subdiv]'
+      'chord requires: <root> <mode> <pattern> <subdiv> <progression|random>'
     );
   }
   const chords = parseProgression(root, mode, progressionInput);
@@ -406,10 +406,10 @@ const makeChord = (parsed: ParsedOptions): NoteObject[] => {
 };
 
 const makeArp = (parsed: ParsedOptions): NoteObject[] => {
-  const [root, mode, progressionInput, pattern, subdiv] = parsed.positionals;
-  if (!root || !mode || !progressionInput || !pattern) {
+  const [root, mode, pattern, subdiv, progressionInput] = parsed.positionals;
+  if (!root || !mode || !progressionInput || !pattern || !subdiv) {
     throw new TypeError(
-      'arp requires: <root> <mode> <progression|random> <pattern> [subdiv]'
+      'arp requires: <root> <mode> <pattern> <subdiv> <progression|random>'
     );
   }
   const chords = parseProgression(root, mode, progressionInput);
