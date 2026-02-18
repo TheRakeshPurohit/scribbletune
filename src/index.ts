@@ -7,6 +7,7 @@ import {
   getChordsByProgression,
   progression,
 } from './progression';
+import { sizzleMap } from './utils';
 
 export * from './types';
 export {
@@ -22,4 +23,5 @@ export {
   progression,
   arp,
   midi,
+  sizzleMap,
 };

@@ -59,6 +59,39 @@ export const shuffle = <T>(arr: T[], fullShuffle = true): T[] => {
 };
 
 /**
+ * Return an array of numbers relative to maxLevel (default 127) ordered in a Sine wave format.
+ * Used by the `sizzle` param of `clip` to add rudimentary variation to the accent of each note.
+ * @param maxLevel A number not exceeding 127
+ * @return Example: [63, 90, 110, 127, 110, 90, 63, 0, 63, 90, 110, 127, 110, 90, 63, 0]
+ */
+export const sizzleMap = (maxLevel = 127): number[] => {
+  const pi = Math.PI;
+  const piArr: number[] = [
+    pi / 6,
+    pi / 4,
+    pi / 3,
+    pi / 2,
+    (2 * pi) / 3,
+    (3 * pi) / 4,
+    (5 * pi) / 6,
+    pi,
+  ];
+  const piArrRev: number[] = [
+    0,
+    pi / 6,
+    pi / 4,
+    pi / 3,
+    pi / 2,
+    (2 * pi) / 3,
+    (3 * pi) / 4,
+    (5 * pi) / 6,
+  ];
+  piArrRev.reverse();
+  const arr: number[] = piArr.concat(piArrRev);
+  return arr.map(element => Math.round(Math.sin(element) * maxLevel));
+};
+
+/**
  * Pick one item randomly from an array and return it
  * @param arr
  */
