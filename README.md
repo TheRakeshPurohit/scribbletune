@@ -107,6 +107,7 @@ scribbletune --riff C3 phrygian 'x-x[xx]-x-[xx]' 8n --style AABC --outfile riff-
 ```
 
 Riff + motif note:
+
 - `--style` creates riff sections by repeating the full pattern per letter.
 - Example: `--style AABC` with pattern `x-x[xx]` creates 4 sections: `A`, `A`, `B`, `C`.
 - Repeated letters reuse the exact same generated section (same rhythm and same notes, including random `R` choices).
@@ -156,6 +157,7 @@ scribbletune --arp C3 major x 4n 1736 --no-fit-pattern --outfile arp-no-fit.mid
 ```
 
 `--order` behavior:
+
 - One-based order is supported (`1234`, `2143`) and is recommended.
 - Zero-based order is also accepted for backward compatibility (`0123`, `1032`).
 
@@ -164,12 +166,12 @@ Run `scribbletune --help` to see the latest CLI usage text.
 ### Option 2: Node.js
 
 ```js
-import { scale, clip, midi } from 'scribbletune';
+import { scale, clip, midi } from "scribbletune";
 
-const notes = scale('C4 major');
-const c = clip({ notes, pattern: 'x'.repeat(8) });
+const notes = scale("C4 major");
+const c = clip({ notes, pattern: "x".repeat(8) });
 
-midi(c, 'c-major.mid');
+midi(c, "c-major.mid");
 ```
 
 Run it with `node` and open the `.mid` file in Ableton Live, GarageBand, Logic, or any DAW.
@@ -179,14 +181,14 @@ Run it with `node` and open the `.mid` file in Ableton Live, GarageBand, Logic, 
 Scribbletune's browser entry point adds `Session`, `Channel`, and live `clip()` support on top of [Tone.js](https://tonejs.github.io/).
 
 ```js
-import { Session } from 'scribbletune/browser';
+import { Session } from "scribbletune/browser";
 
 const session = new Session();
 const channel = session.createChannel({
-  instrument: 'PolySynth',
+  instrument: "PolySynth",
   clips: [
-    { pattern: 'x-x-', notes: 'C4 E4 G4' },
-    { pattern: '[-xx]', notes: 'C4 D#4' },
+    { pattern: "x-x-", notes: "C4 E4 G4" },
+    { pattern: "[-xx]", notes: "C4 D#4" },
   ],
 });
 
@@ -198,16 +200,20 @@ channel.startClip(0);
 ### Standalone sample clip (no Session/Channel needed)
 
 ```js
-import { clip } from 'scribbletune/browser';
+import { clip } from "scribbletune/browser";
 
-await Tone.start();
-Tone.Transport.start();
-
-const kick = clip({
-  sample: 'https://scribbletune.com/sounds/kick.wav',
-  pattern: 'x-x-',
+const kickClip = clip({
+  sample: "https://scribbletune.com/sounds/kick.wav",
+  pattern: "x-x-",
 });
-kick.start();
+
+const btn = document.querySelector("#btn");
+
+btn.addEventListener("click", async () => {
+  await Tone.start();
+  Tone.Transport.start();
+  kickClip.start(0);
+});
 ```
 
 ## Core concepts
@@ -216,18 +222,18 @@ kick.start();
 
 Scribbletune uses a simple string notation to describe rhythms:
 
-| Char | Meaning |
-|------|---------|
-| `x` | Note on |
-| `-` | Note off (rest) |
-| `_` | Sustain previous note |
-| `R` | Random note (from `randomNotes` pool) |
+| Char | Meaning                                         |
+| ---- | ----------------------------------------------- |
+| `x`  | Note on                                         |
+| `-`  | Note off (rest)                                 |
+| `_`  | Sustain previous note                           |
+| `R`  | Random note (from `randomNotes` pool)           |
 | `[]` | Subdivide (e.g. `[xx]` = two notes in one beat) |
 
 ```js
-'x---x---x-x-x---'   // basic kick pattern
-'[xx][xx]x-x-'        // hihat with subdivisions
-'x___'                 // one long sustained note
+"x---x---x-x-x---"; // basic kick pattern
+"[xx][xx]x-x-"; // hihat with subdivisions
+"x___"; // one long sustained note
 ```
 
 ### Scales and chords
@@ -235,31 +241,31 @@ Scribbletune uses a simple string notation to describe rhythms:
 Powered by [harmonics](https://github.com/scribbletune/harmonics):
 
 ```js
-import { scale, chord, scales, chords } from 'scribbletune';
+import { scale, chord, scales, chords } from "scribbletune";
 
-scale('C4 major');       // ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4']
-chord('CM');             // ['C4', 'E4', 'G4']
-scales();                // list all available scale names
-chords();                // list all available chord names
+scale("C4 major"); // ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4']
+chord("CM"); // ['C4', 'E4', 'G4']
+scales(); // list all available scale names
+chords(); // list all available chord names
 ```
 
 ### Arpeggios
 
 ```js
-import { arp } from 'scribbletune';
+import { arp } from "scribbletune";
 
-arp({ chords: 'CM FM', count: 4, order: '0123' });
+arp({ chords: "CM FM", count: 4, order: "0123" });
 // ['C4', 'E4', 'G4', 'C5', 'F4', 'A4', 'C5', 'F5']
 ```
 
 ### Chord progressions
 
 ```js
-import { progression, getChordsByProgression } from 'scribbletune';
+import { progression, getChordsByProgression } from "scribbletune";
 
-progression('M', 4);  // e.g. ['I', 'ii', 'V', 'IV']
+progression("M", 4); // e.g. ['I', 'ii', 'V', 'IV']
 
-getChordsByProgression('C4 major', 'I IV V IV');
+getChordsByProgression("C4 major", "I IV V IV");
 // 'CM_4 FM_4 GM_4 FM_4'
 ```
 
@@ -270,22 +276,17 @@ The browser entry point (`scribbletune/browser`) provides everything above plus:
 ### Session and Channel
 
 ```js
-import { Session } from 'scribbletune/browser';
+import { Session } from "scribbletune/browser";
 
 const session = new Session();
 const drums = session.createChannel({
-  sample: 'https://scribbletune.com/sounds/kick.wav',
-  clips: [
-    { pattern: 'x---x---' },
-    { pattern: 'x-x-x-x-' },
-  ],
+  sample: "https://scribbletune.com/sounds/kick.wav",
+  clips: [{ pattern: "x---x---" }, { pattern: "x-x-x-x-" }],
 });
 
 const synth = session.createChannel({
-  instrument: 'PolySynth',
-  clips: [
-    { pattern: 'x-x-', notes: 'C4 E4 G4' },
-  ],
+  instrument: "PolySynth",
+  clips: [{ pattern: "x-x-", notes: "C4 E4 G4" }],
 });
 
 await Tone.start();
@@ -325,19 +326,19 @@ Channels accept various sound sources:
 
 ## API reference
 
-| Export | Description |
-|--------|-------------|
-| `clip(params)` | Create a clip — returns note objects (Node.js) or a Tone.Sequence (browser) |
-| `midi(clip, filename?)` | Export a clip to a MIDI file |
-| `scale(name)` | Get notes of a scale, e.g. `'C4 minor'` |
-| `chord(name)` | Get notes of a chord, e.g. `'CM'` |
-| `scales()` | List all available scale names |
-| `chords()` | List all available chord names |
-| `arp(params)` | Generate arpeggiated note sequences |
-| `progression(type, count)` | Generate a chord progression (`'M'` or `'m'`) |
-| `getChordsByProgression(scale, degrees)` | Convert Roman numeral degrees to chord names |
-| `getChordDegrees(mode)` | Get Roman numeral degrees for a mode |
-| `Session` | _(browser only)_ Manage multiple channels and coordinate playback |
+| Export                                   | Description                                                                 |
+| ---------------------------------------- | --------------------------------------------------------------------------- |
+| `clip(params)`                           | Create a clip — returns note objects (Node.js) or a Tone.Sequence (browser) |
+| `midi(clip, filename?)`                  | Export a clip to a MIDI file                                                |
+| `scale(name)`                            | Get notes of a scale, e.g. `'C4 minor'`                                     |
+| `chord(name)`                            | Get notes of a chord, e.g. `'CM'`                                           |
+| `scales()`                               | List all available scale names                                              |
+| `chords()`                               | List all available chord names                                              |
+| `arp(params)`                            | Generate arpeggiated note sequences                                         |
+| `progression(type, count)`               | Generate a chord progression (`'M'` or `'m'`)                               |
+| `getChordsByProgression(scale, degrees)` | Convert Roman numeral degrees to chord names                                |
+| `getChordDegrees(mode)`                  | Get Roman numeral degrees for a mode                                        |
+| `Session`                                | _(browser only)_ Manage multiple channels and coordinate playback           |
 
 ## Development
 
